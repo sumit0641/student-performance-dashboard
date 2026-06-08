@@ -1,5 +1,4 @@
-# student-performance-dashboard
-visualization project
+Visualization project
 # 🎓 Student Academic Performance Dashboard
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
