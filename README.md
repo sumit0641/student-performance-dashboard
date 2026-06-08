@@ -1,12 +1,15 @@
-Visualization project
 # 🎓 Student Academic Performance Dashboard
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.20+-FF4B4B.svg)
 ![Plotly](https://img.shields.io/badge/Plotly-Interactive-3f4f75.svg)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](YOUR_DEPLOYED_URL_HERE)
 
 ## 📌 Overview
 An end-to-end data exploration and visualization project analyzing the various factors that influence a student's academic performance. This project moves from raw data processing to a fully interactive web dashboard, allowing users to dynamically explore how lifestyle choices, demographics, and preparation impact final exam scores. 
+
+## 🔗 Live Demo
+Explore the interactive dashboard live here: **[Student Academic Performance Dashboard](https://student-performance-dashboard-kwqmpbeeec8uqc9zdj54ku.streamlit.app/)**
 
 ## 🚀 Features
 - **Interactive Exploratory Data Analysis (EDA):** Users can hover, zoom, and filter data points in real-time.
