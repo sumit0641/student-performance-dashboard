@@ -1,96 +1,92 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
 
 # ==========================================
-# 1. PAGE SETUP & DATA LOADING
+# 1. PAGE SETUP & THEME
 # ==========================================
-st.set_page_config(page_title="Academic Performance Dashboard", layout="wide")
-st.title("Student Academic Performance Dashboard")
-st.write("Explore how lifestyle factors and demographics affect student exam scores.")
+# This must be the first Streamlit command
+st.set_page_config(page_title="Student Analytics", layout="wide", initial_sidebar_state="expanded")
 
-# Apply seaborn theme for better looking web charts
-sns.set_theme(style="whitegrid")
-
-# Load the dataset (cached so it doesn't reload on every interaction)
+# Load the dataset
 @st.cache_data
 def load_data():
-    try:
-        return pd.read_csv('student_performance_data.csv')
-    except FileNotFoundError:
-        st.error("Dataset not found. Please ensure 'student_performance_data.csv' is in the same directory.")
-        st.stop()
+    return pd.read_csv('student_performance_data.csv')
 
 df = load_data()
 
 # ==========================================
-# 2. CORRELATION MATRIX (Heatmap)
+# 2. SIDEBAR & KPI METRICS
 # ==========================================
-st.header("1. Correlation Matrix")
-st.write("Visualizing the mathematical relationships between continuous variables.")
+with st.sidebar:
+    st.title("📊 Student Analytics")
+    st.write("An interactive dashboard exploring the factors that impact academic success.")
+    st.divider()
+    st.write("**Dataset Overview:**")
+    st.write(f"Total Students: {len(df)}")
+    st.write("Variables: Demographics, Lifestyle, Scores")
 
-fig1, ax1 = plt.subplots(figsize=(8, 6))
-numerical_df = df[['Study_Hours_Per_Week', 'Attendance_Percentage', 'Math_Score', 'Reading_Score', 'Writing_Score']]
-corr_matrix = numerical_df.corr()
+# Main Page Title
+st.title("Academic Performance Dashboard")
 
-sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, ax=ax1)
-ax1.set_title('Correlation Matrix of Numerical Factors', fontsize=14, pad=15)
-st.pyplot(fig1)
-
-st.divider() # Adds a clean visual break between sections
-
-# ==========================================
-# 3. BOX PLOT
-# ==========================================
-st.header("2. Math Scores by Parental Education")
-st.write("Identifying the spread and outliers in scores across different education levels.")
-
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-sns.boxplot(data=df, x='Parental_Education', y='Math_Score', palette='Set2', ax=ax2)
-ax2.set_title('Math Score Distribution by Parental Education', fontsize=14)
-ax2.set_xlabel('Parental Education Level')
-ax2.set_ylabel('Math Score')
-st.pyplot(fig2)
+# Top Row KPI Metrics
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.metric(label="Average Math Score", value=f"{df['Math_Score'].mean():.1f}/100")
+with col2:
+    st.metric(label="Average Reading Score", value=f"{df['Reading_Score'].mean():.1f}/100")
+with col3:
+    st.metric(label="Avg Study Hours/Wk", value=f"{df['Study_Hours_Per_Week'].mean():.1f} hrs")
+with col4:
+    st.metric(label="Avg Attendance", value=f"{df['Attendance_Percentage'].mean():.1f}%")
 
 st.divider()
 
 # ==========================================
-# 4. VIOLIN PLOT
+# 3. INTERACTIVE VISUALIZATIONS (PLOTLY)
 # ==========================================
-st.header("3. Reading Score Density by Test Prep")
-st.write("Analyzing the volume and distribution of scores based on course completion.")
+# Create a 2-column layout for the top two charts
+chart_col1, chart_col2 = st.columns(2)
 
-fig3, ax3 = plt.subplots(figsize=(8, 6))
-sns.violinplot(data=df, x='Test_Prep_Course', y='Reading_Score', palette='muted', split=False, ax=ax3)
-ax3.set_title('Reading Score Density by Test Prep Course', fontsize=14)
-ax3.set_xlabel('Test Preparation Course')
-ax3.set_ylabel('Reading Score')
-st.pyplot(fig3)
+with chart_col1:
+    st.subheader("1. Correlation Heatmap")
+    numerical_df = df[['Study_Hours_Per_Week', 'Attendance_Percentage', 'Math_Score', 'Reading_Score', 'Writing_Score']]
+    corr_matrix = numerical_df.corr()
+    
+    # Plotly Heatmap
+    fig_heat = px.imshow(corr_matrix, text_auto=".2f", aspect="auto", color_continuous_scale='RdBu_r')
+    st.plotly_chart(fig_heat, use_container_width=True)
 
-st.divider()
+with chart_col2:
+    st.subheader("2. Math Scores by Parental Education")
+    # Plotly Interactive Box Plot
+    fig_box = px.box(df, x='Parental_Education', y='Math_Score', color='Parental_Education',
+                     category_orders={"Parental_Education": ["High School", "Associate", "Bachelor", "Master"]})
+    st.plotly_chart(fig_box, use_container_width=True)
 
-# ==========================================
-# 5. SUBJECT-WISE COMPARISON CHART
-# ==========================================
-st.header("4. Subject Performance Comparison")
-st.write("Comparing average performance across disciplines, split by gender.")
+# Create a 2-column layout for the bottom two charts
+chart_col3, chart_col4 = st.columns(2)
 
-# Melt the dataframe
-melted_df = pd.melt(df, 
-                    id_vars=['Gender'], 
-                    value_vars=['Math_Score', 'Reading_Score', 'Writing_Score'],
-                    var_name='Subject', 
-                    value_name='Score')
+with chart_col3:
+    st.subheader("3. Reading Density by Test Prep")
+    # Plotly Interactive Violin Plot
+    fig_violin = px.violin(df, x='Test_Prep_Course', y='Reading_Score', color='Test_Prep_Course', 
+                           box=True, points="all", hover_data=df.columns)
+    st.plotly_chart(fig_violin, use_container_width=True)
 
-# Clean up the subject names for the plot labels
-melted_df['Subject'] = melted_df['Subject'].str.replace('_Score', '')
-
-fig4, ax4 = plt.subplots(figsize=(10, 6))
-sns.barplot(data=melted_df, x='Subject', y='Score', hue='Gender', palette='pastel', errorbar=None, ax=ax4)
-ax4.set_title('Average Subject Scores Compared by Gender', fontsize=14)
-ax4.set_xlabel('Subject')
-ax4.set_ylabel('Average Score')
-ax4.legend(title='Gender')
-st.pyplot(fig4)
+with chart_col4:
+    st.subheader("4. Subject Comparison")
+    # Melt dataframe for grouped bar chart
+    melted_df = pd.melt(df, id_vars=['Gender'], value_vars=['Math_Score', 'Reading_Score', 'Writing_Score'],
+                        var_name='Subject', value_name='Score')
+    melted_df['Subject'] = melted_df['Subject'].str.replace('_Score', '')
+    
+    # Calculate averages for the bar chart
+    avg_scores = melted_df.groupby(['Subject', 'Gender'])['Score'].mean().reset_index()
+    
+    # Plotly Grouped Bar Chart
+    fig_bar = px.bar(avg_scores, x='Subject', y='Score', color='Gender', barmode='group')
+    fig_bar.update_layout(yaxis_range=[0,100]) # Lock Y-axis to 100 for proper scale
+    st.plotly_chart(fig_bar, use_container_width=True)
